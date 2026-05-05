@@ -90,20 +90,27 @@ int do_noquantum(message *m_ptr)
 	int rv, proc_nr_n;
 
 	if (sched_isokendpt(m_ptr->m_source, &proc_nr_n) != OK) {
-		printf("SCHED: WARNING: got an invalid endpoint in OOQ msg %u.\n",
-		m_ptr->m_source);
-		return EBADEPT;
-	}
+                printf("SCHED: WARNING: got an invalid endpoint in OOQ msg %u.\n",
+                m_ptr->m_source);
+                return EBADEPT;
+        }
 
-	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
-		rmp->priority += 1; /* lower priority */
-	}
+        rmp = &schedproc[proc_nr_n];
 
-	if ((rv = schedule_process_local(rmp)) != OK) {
-		return rv;
-	}
-	return OK;
+        rmp->exhausted_count++;
+
+        if (rmp->exhausted_count >= 3) {
+                    if (rmp->priority < MIN_USER_Q) {
+                        rmp->priority += 1; /* Bajamos la prioridad (aumentando el nivel) */
+                }
+         }
+
+ 
+        if ((rv = schedule_process_local(rmp)) != OK) {
+                return rv;
+        }
+
+        return OK;
 }
 
 /*===========================================================================*
